@@ -91,7 +91,7 @@ app.get('/user-info', (req, res) => {
 
 
 // Initialize WhatsApp client
-const initializeClient = (email, token) => {
+const initializeClient = (email) => {
   clients[email] = new Client({
     puppeteer: {
       headless: true,
@@ -103,7 +103,7 @@ const initializeClient = (email, token) => {
       type: 'none',
     }
   });
-
+  console.log(userTokens[email]);
   clients[email].initialize();
 
   clients[email].on('ready', async () => {
@@ -153,10 +153,10 @@ const handleClientDisconnection = (email) => {
 
 // Initialize WhatsApp client
 app.post('/initialize', (req, res) => {
-  const { email, token } = req.body;
+  const { email} = req.body;
   if (!clients[email]) {
-    userTokens[email] = token; // Save the token for later use
-    initializeClient(email, token);
+    
+    initializeClient(email);
     res.send({ message: 'Client initialized' });
   } else {
     res.send({ message: 'Client already initialized' });
@@ -235,21 +235,17 @@ app.get('/file-status/:email', (req, res) => {
 
 app.post('/upload/:email', async (req, res) => {
   const email = req.params.email;
-  const userFolderPath = path.join(__dirname, email);
-  const zipFilePath = path.join(__dirname, `${email}.zip`);
+  const filePath = path.join(__dirname, `${email}.xlsx`);
 
   try {
-    // Create a zip file of the folder
-    await createZipFile(userFolderPath, zipFilePath);
+    // Upload the file
+    const mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const fileId = await uploadFile(email, filePath, mimeType, userTokens[email]);
 
-    // Upload the zip file
-    const mimeType = 'application/zip';
-    const fileId = await uploadFile(email, zipFilePath, mimeType, userTokens[email]);
-
-    res.send({ message: 'Folder uploaded successfully', fileId });
+    res.send({ message: 'File uploaded successfully', fileId });
   } catch (error) {
-    console.error('Error uploading folder:', error);
-    res.status(500).send('Error uploading folder');
+    console.error('Error uploading file:', error);
+    res.status(500).send('Error uploading file');
   }
 });
 
@@ -261,18 +257,10 @@ app.post('/upload/:email', async (req, res) => {
 
 
 
-async function createUserFolder(email){
-  const userFolderPath = path.join(__dirname, email);
-  if (!fs.existsSync(userFolderPath)) {
-    fs.mkdirSync(userFolderPath);
-    console.log(`Created folder for ${email}: ${userFolderPath}`);
-  }
-  return userFolderPath;
-};
+
 
 async function makeFile(email, client, start, end){
   const messageQueue = [];
-  mediaFolderPath = await createUserFolder(email);
 
   const processReaction = async (message) => {
     const reactions = await message.getReactions();
@@ -296,7 +284,7 @@ async function makeFile(email, client, start, end){
   const processMessage = async (message) => {
     const messageTimestampUnix = message.timestamp;
     if (messageTimestampUnix > start && messageTimestampUnix < end && !message.isGif && !message.from.includes("status@broad") && message.from !== "0@c.us") {
-      const messageResult = await handle_message(message, client, mediaFolderPath);
+      const messageResult = await handle_message(message, client, mediaFolderPath, userTokens[email], email);
       if (messageResult) {
         const { timedate, from, to, messagebody, type, message_code } = messageResult;
         messageQueue.push({ messageTimestampUnix, timedate, from, to, messagebody, type, message_code });
@@ -318,7 +306,7 @@ async function makeFile(email, client, start, end){
     await Promise.all(chats.map(processChat));
     messageQueue.sort((a, b) => a.messageTimestampUnix - b.messageTimestampUnix);
     const fileName = `${email}.xlsx`;
-    const filePath = path.join(mediaFolderPath, fileName);
+    const filePath = path.join(__dirname, fileName);
     await createExcelFile(filePath, messageQueue); // Create the Excel file
     console.log(`File created: ${filePath}`);
     // const fileLink = await uploadFileToDrive(email, filePath); // Upload the file to Google Drive

@@ -7,7 +7,7 @@ const CLIENT_SECRET = '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';
 const REDIRECT_URL = 'http://localhost:3000/oauth2callback';
 
 // Create a new instance of the OAuth2Client with the stored token
-function createDriveInstance(email, userTokens) {
+function createDriveInstance(email, userToken) {
   const oauth2Client = new google.auth.OAuth2(
     CLIENT_ID,
     CLIENT_SECRET,
@@ -15,10 +15,10 @@ function createDriveInstance(email, userTokens) {
   );
 
   // Debugging: Log the user tokens
-  console.log('User Tokens:', userTokens);
+  console.log('User Tokens:', userToken);
 
-  if (userTokens) {
-    oauth2Client.setCredentials(userTokens);
+  if (userToken) {
+    oauth2Client.setCredentials(userToken);
   } else {
     throw new Error('User tokens are undefined or invalid.');
   }
@@ -27,9 +27,9 @@ function createDriveInstance(email, userTokens) {
 }
 
 // Upload function
-async function uploadFile(email, filePath, mimeType, userTokens) {
-  console.log(userTokens);
-  const drive = createDriveInstance(email, userTokens);
+async function uploadFile(email, filePath, mimeType, userToken) {
+  console.log(userToken);
+  const drive = createDriveInstance(email, userToken);
 
   const fileMetadata = {
     name: path.basename(filePath),
