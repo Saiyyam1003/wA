@@ -17,6 +17,13 @@ async function createExcelFile(filePath, dataArray) {
             To: rest.to,
             Message: rest.messagebody,
             Type: rest.type,
+            Link: {
+              v: rest.link,
+              l: {
+                Target: rest.link,
+                Tooltip: rest.link
+              }
+            },
             'Message Code': rest.message_code
         }));
 

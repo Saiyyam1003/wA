@@ -95,7 +95,7 @@ async function handle_message(message, client, mediaFolderPath, userToken, email
 
         console.log(`Processed message with ID: ${message_code} | From: ${from} | To: ${to} | Body: ${messagebody}`);
 
-        return { timedate, from, to, link, type, link, fileSize, message_code };
+        return { timedate, from, to, messagebody, type, link, fileSize, message_code };
     } catch (er) {
         console.error('Error processing message:', er);
     }

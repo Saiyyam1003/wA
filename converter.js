@@ -141,7 +141,7 @@ const handleClientDisconnection = (email) => {
     console.log(`Deleted QR code image for ${email}: ${qrImagePath}`);
   }
 
-  const userFolderPath = path.join(__dirname, email);
+  const userFolderPath = path.join(__dirname, `${email}.xlsx`);
   if (fs.existsSync(userFolderPath)) {
     fs.rmdirSync(userFolderPath, { recursive: true });
     console.log(`Deleted user folder for ${email}: ${userFolderPath}`);
@@ -261,6 +261,8 @@ app.post('/upload/:email', async (req, res) => {
 
 async function makeFile(email, client, start, end){
   const messageQueue = [];
+  const fileName = `${email}.xlsx`;
+    const filePath = path.join(__dirname, fileName);
 
   const processReaction = async (message) => {
     const reactions = await message.getReactions();
@@ -284,10 +286,10 @@ async function makeFile(email, client, start, end){
   const processMessage = async (message) => {
     const messageTimestampUnix = message.timestamp;
     if (messageTimestampUnix > start && messageTimestampUnix < end && !message.isGif && !message.from.includes("status@broad") && message.from !== "0@c.us") {
-      const messageResult = await handle_message(message, client, mediaFolderPath, userTokens[email], email);
+      const messageResult = await handle_message(message, client, filePath, userTokens[email], email);
       if (messageResult) {
-        const { timedate, from, to, messagebody, type, message_code } = messageResult;
-        messageQueue.push({ messageTimestampUnix, timedate, from, to, messagebody, type, message_code });
+        const { timedate, from, to, messagebody, type, link,  message_code } = messageResult;
+        messageQueue.push({ messageTimestampUnix, timedate, from, to, messagebody, type, link, message_code });
       }
       else{
           console.log("no message");
@@ -302,11 +304,11 @@ async function makeFile(email, client, start, end){
   };
 
   try {
+    
     const chats = await client.getChats();
     await Promise.all(chats.map(processChat));
     messageQueue.sort((a, b) => a.messageTimestampUnix - b.messageTimestampUnix);
-    const fileName = `${email}.xlsx`;
-    const filePath = path.join(__dirname, fileName);
+    
     await createExcelFile(filePath, messageQueue); // Create the Excel file
     console.log(`File created: ${filePath}`);
     // const fileLink = await uploadFileToDrive(email, filePath); // Upload the file to Google Drive
