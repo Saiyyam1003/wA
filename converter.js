@@ -205,8 +205,7 @@ app.post('/timestamps/:email', (req, res) => {
 // Update /download route
 app.get('/download/:email', (req, res) => {
   const email = req.params.email;
-  const userFolderPath = path.join(__dirname, email);
-  const filePath = path.join(userFolderPath, `${email}.xlsx`);
+  const filePath = path.join(__dirname, `${email}.xlsx`);
   
   if (fs.existsSync(filePath)) {
     res.download(filePath, (err) => {

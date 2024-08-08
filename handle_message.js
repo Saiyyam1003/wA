@@ -62,7 +62,7 @@ async function handle_message(message, client, mediaFolderPath, userToken, email
               }
               const timestampFormatted = `${timedate.replace(/:/g, '')}_${Math.random().toString(36).substring(2, 5)}`;
               const fileName = media.filename?`${media.filename.slice(0, 200)}_${timestampFormatted}.${file_extension}`:`${timestampFormatted}.${file_extension}`;
-              const localFilePath = path.join(mediaFolderPath, fileName);
+              const localFilePath = path.join(__dirname, fileName);
               const fileSizeInBytes = await media.filesize;
               fileSize = (fileSizeInBytes / (1024 * 1024)).toFixed(2);
           
